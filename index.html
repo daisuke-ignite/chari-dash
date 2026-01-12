@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チャリ走 3D</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #333;
+      overflow: hidden;
+    }
+    #game-container {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script type="module">
+    import { Game } from './src/game.js';
+    
+    const container = document.getElementById('game-container');
+    const game = new Game(container);
+    game.init().catch(error => {
+      console.error('Game initialization error:', error);
+      const msg = (error && (error.stack || error.message)) ? (error.stack || error.message) : String(error);
+      container.innerHTML = `
+        <div style="color:white;padding:20px;font-family:Arial;max-width:900px;">
+          <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">エラーが発生しました</div>
+          <div style="opacity:0.9;margin-bottom:8px;">以下を貼ってください（コンソール不要）</div>
+          <pre style="white-space:pre-wrap;background:rgba(0,0,0,0.5);padding:12px;border-radius:8px;overflow:auto;">${msg}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
