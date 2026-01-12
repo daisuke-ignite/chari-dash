@@ -39,6 +39,7 @@ export class Player3D {
     
     this.jumpCount = 0;
     this.currentSpeed = CONFIG.GROUND_SPEED;
+    this.wasInAir = false;
   }
   
   /**
@@ -76,13 +77,23 @@ export class Player3D {
    */
   update(deltaTime) {
     const linvel = this.rigidBody.linvel();
-    this.rigidBody.setLinvel({ 
-      x: this.currentSpeed, 
-      y: linvel.y, 
-      z: linvel.z 
+    this.rigidBody.setLinvel({
+      x: this.currentSpeed,
+      y: linvel.y,
+      z: linvel.z
     }, true);
-    
+
     this.syncMeshToPhysics();
+
+    // 着地判定（Y速度が小さく、地面に近い場合）
+    const position = this.rigidBody.translation();
+    const groundLevel = CONFIG.PLAYER_SIZE / 2;
+    const isOnGround = position.y <= groundLevel + 0.1 && Math.abs(linvel.y) < 0.5;
+
+    if (isOnGround && this.wasInAir) {
+      this.onGroundCollision();
+    }
+    this.wasInAir = !isOnGround;
   }
   
   /**

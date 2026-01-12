@@ -52,13 +52,13 @@ export class GroundManager3D {
     mesh.receiveShadow = true;
     this.scene.add(mesh);
     
-    // 物理ボディ作成
+    // 物理ボディ作成（kinematicで位置更新可能に）
     const halfSize = [
       CONFIG.GROUND_WIDTH / 2,
       CONFIG.GROUND_HEIGHT / 2,
       CONFIG.GROUND_DEPTH / 2
     ];
-    const rigidBody = this.physicsWorld.createStaticBody([
+    const rigidBody = this.physicsWorld.createKinematicBody([
       x,
       -CONFIG.GROUND_HEIGHT / 2,
       0
@@ -101,13 +101,13 @@ export class GroundManager3D {
     mesh.receiveShadow = true;
     this.scene.add(mesh);
     
-    // 物理ボディ作成
+    // 物理ボディ作成（kinematicで位置更新可能に）
     const halfSize = [
       CONFIG.WALL_WIDTH / 2,
       CONFIG.WALL_HEIGHT / 2,
       CONFIG.WALL_DEPTH / 2
     ];
-    const rigidBody = this.physicsWorld.createStaticBody([
+    const rigidBody = this.physicsWorld.createKinematicBody([
       x,
       CONFIG.WALL_HEIGHT / 2,
       0
@@ -130,11 +130,10 @@ export class GroundManager3D {
       ground.x -= moveAmount;
       ground.mesh.position.x = ground.x;
       
-      // 物理ボディも更新
+      // 物理ボディも更新（kinematicボディ用）
       const translation = ground.rigidBody.translation();
-      ground.rigidBody.setTranslation(
-        { x: ground.x, y: translation.y, z: translation.z },
-        true
+      ground.rigidBody.setNextKinematicTranslation(
+        { x: ground.x, y: translation.y, z: translation.z }
       );
       
       // 画面外に出た地面を右端に再配置
@@ -153,9 +152,8 @@ export class GroundManager3D {
         
         ground.mesh.position.x = ground.x;
         const trans = ground.rigidBody.translation();
-        ground.rigidBody.setTranslation(
-          { x: ground.x, y: trans.y, z: trans.z },
-          true
+        ground.rigidBody.setNextKinematicTranslation(
+          { x: ground.x, y: trans.y, z: trans.z }
         );
       }
     });
@@ -171,11 +169,10 @@ export class GroundManager3D {
       wall.x -= moveAmount;
       wall.mesh.position.x = wall.x;
       
-      // 物理ボディも更新
+      // 物理ボディも更新（kinematicボディ用）
       const translation = wall.rigidBody.translation();
-      wall.rigidBody.setTranslation(
-        { x: wall.x, y: translation.y, z: translation.z },
-        true
+      wall.rigidBody.setNextKinematicTranslation(
+        { x: wall.x, y: translation.y, z: translation.z }
       );
       
       // 画面外に出た壁を削除

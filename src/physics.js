@@ -16,12 +16,7 @@ export class PhysicsWorld {
   async init() {
     try {
       // rapier3d-compatの初期化
-      if (RAPIER.initWasm) {
-        await RAPIER.initWasm();
-      } else if (RAPIER.init) {
-        await RAPIER.init();
-      }
-      // 初期化が不要な場合もある
+      await RAPIER.init();
       
       const gravity = { x: 0.0, y: -CONFIG.GRAVITY, z: 0.0 };
       this.world = new RAPIER.World(gravity);
@@ -63,6 +58,18 @@ export class PhysicsWorld {
    */
   createStaticBody(position, quaternion) {
     const bodyDesc = RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(position[0], position[1], position[2]);
+    if (quaternion) {
+      bodyDesc.setRotation(quaternion);
+    }
+    return this.world.createRigidBody(bodyDesc);
+  }
+
+  /**
+   * Kinematic RigidBodyを作成（位置を直接更新可能）
+   */
+  createKinematicBody(position, quaternion) {
+    const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
       .setTranslation(position[0], position[1], position[2]);
     if (quaternion) {
       bodyDesc.setRotation(quaternion);
