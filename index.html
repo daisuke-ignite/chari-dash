@@ -24,20 +24,26 @@
   <div id="game-container"></div>
   <script type="module">
     import { Game } from './src/game.js';
-    
-    const container = document.getElementById('game-container');
-    const game = new Game(container);
-    game.init().catch(error => {
-      console.error('Game initialization error:', error);
-      const msg = (error && (error.stack || error.message)) ? (error.stack || error.message) : String(error);
-      container.innerHTML = `
-        <div style="color:white;padding:20px;font-family:Arial;max-width:900px;">
-          <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">エラーが発生しました</div>
-          <div style="opacity:0.9;margin-bottom:8px;">以下を貼ってください（コンソール不要）</div>
-          <pre style="white-space:pre-wrap;background:rgba(0,0,0,0.5);padding:12px;border-radius:8px;overflow:auto;">${msg}</pre>
-        </div>
-      `;
-    });
+
+    // HMRによる重複初期化を防止
+    if (window.__GAME_INITIALIZED__) {
+      console.log('Game already initialized, skipping...');
+    } else {
+      window.__GAME_INITIALIZED__ = true;
+      const container = document.getElementById('game-container');
+      const game = new Game(container);
+      game.init().catch(error => {
+        console.error('Game initialization error:', error);
+        const msg = (error && (error.stack || error.message)) ? (error.stack || error.message) : String(error);
+        container.innerHTML = `
+          <div style="color:white;padding:20px;font-family:Arial;max-width:900px;">
+            <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">エラーが発生しました</div>
+            <div style="opacity:0.9;margin-bottom:8px;">以下を貼ってください（コンソール不要）</div>
+            <pre style="white-space:pre-wrap;background:rgba(0,0,0,0.5);padding:12px;border-radius:8px;overflow:auto;">${msg}</pre>
+          </div>
+        `;
+      });
+    }
   </script>
 </body>
 </html>

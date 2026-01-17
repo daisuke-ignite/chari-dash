@@ -18,26 +18,31 @@ export class GameScene {
   init() {
     // シーン作成
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1a1a2e);
-    
+
+    // 空色の背景
+    this.scene.background = new THREE.Color(0x87CEEB);
+
+    // フォグ追加（遠景をぼかす、かなり先まで見えるように設定）
+    this.scene.fog = new THREE.Fog(0x87CEEB, 50, 120);
+
     // カメラ作成（後でcamera.jsで設定）
     this.camera = new THREE.PerspectiveCamera(
-      75,
+      60, // 初期FOV（camera.jsと合わせる）
       CONFIG.WIDTH / CONFIG.HEIGHT,
       0.1,
       1000
     );
-    
+
     // レンダラー作成
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(CONFIG.WIDTH, CONFIG.HEIGHT);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
-    
+
     // ライティング設定
     this.setupLighting();
-    
+
     return {
       scene: this.scene,
       camera: this.camera,

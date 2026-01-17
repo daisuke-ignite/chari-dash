@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:3000` にアクセス
+起動後、ターミナルに表示される `Local:` のURL（例: `http://127.0.0.1:3000`）にアクセス
 
 ## 操作方法
 

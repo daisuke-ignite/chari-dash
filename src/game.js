@@ -31,6 +31,10 @@ export class Game {
    * ゲームを初期化
    */
   async init() {
+    // 二重初期化防止
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     try {
       console.log('Initializing game...');
       
@@ -54,6 +58,9 @@ export class Game {
     
     // プレイヤー作成
     this.player = new Player3D(scene, this.physicsWorld, [0, 2, 0]);
+    this.player.onLand = () => {
+      this.cameraController.shake(0.08, 0.15);
+    };
     this.cameraController.setTarget(this.player);
     
     // UI作成
@@ -88,8 +95,15 @@ export class Game {
    * UI作成
    */
   createUI() {
+    // 既存のUI要素を削除（重複防止）
+    const existingScore = this.container.querySelector('.score-display');
+    const existingGameOver = this.container.querySelector('.gameover-display');
+    if (existingScore) existingScore.remove();
+    if (existingGameOver) existingGameOver.remove();
+
     // スコア表示
     this.scoreElement = document.createElement('div');
+    this.scoreElement.className = 'score-display';
     this.scoreElement.style.position = 'absolute';
     this.scoreElement.style.top = '16px';
     this.scoreElement.style.left = '16px';
@@ -99,9 +113,10 @@ export class Game {
     this.scoreElement.style.fontWeight = 'bold';
     this.scoreElement.textContent = 'Score: 0';
     this.container.appendChild(this.scoreElement);
-    
+
     // ゲームオーバー表示
     this.gameOverElement = document.createElement('div');
+    this.gameOverElement.className = 'gameover-display';
     this.gameOverElement.style.position = 'absolute';
     this.gameOverElement.style.top = '50%';
     this.gameOverElement.style.left = '50%';
@@ -112,6 +127,33 @@ export class Game {
     this.gameOverElement.style.textAlign = 'center';
     this.gameOverElement.style.display = 'none';
     this.container.appendChild(this.gameOverElement);
+
+    // 速度上昇通知
+    this.speedUpElement = document.createElement('div');
+    this.speedUpElement.className = 'speedup-display';
+    this.speedUpElement.style.position = 'absolute';
+    this.speedUpElement.style.top = '30%';
+    this.speedUpElement.style.left = '50%';
+    this.speedUpElement.style.transform = 'translate(-50%, -50%)';
+    this.speedUpElement.style.color = '#ffff00';
+    this.speedUpElement.style.fontSize = '28px';
+    this.speedUpElement.style.fontFamily = 'Arial';
+    this.speedUpElement.style.fontWeight = 'bold';
+    this.speedUpElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+    this.speedUpElement.style.opacity = '0';
+    this.speedUpElement.style.transition = 'opacity 0.3s';
+    this.speedUpElement.textContent = 'SPEED UP!';
+    this.container.appendChild(this.speedUpElement);
+  }
+
+  /**
+   * 速度上昇通知を表示
+   */
+  showSpeedUp() {
+    this.speedUpElement.style.opacity = '1';
+    setTimeout(() => {
+      this.speedUpElement.style.opacity = '0';
+    }, 1000);
   }
   
   /**
@@ -181,8 +223,10 @@ export class Game {
       this.groundManager.updateGrounds(moveAmount, this.player.position.x);
       this.groundManager.updateWalls(moveAmount, this.player.position.x);
 
-      // カメラ更新
-      this.cameraController.update();
+      // カメラ更新（速度比率を渡してFOV演出）
+      const speedRatio = (this.currentSpeed - CONFIG.GROUND_SPEED) / (CONFIG.MAX_SPEED - CONFIG.GROUND_SPEED);
+      this.cameraController.setSpeedRatio(speedRatio);
+      this.cameraController.update(deltaTime);
 
       // スコア更新
       this.score += this.currentSpeed * deltaTime;
@@ -192,11 +236,17 @@ export class Game {
       this.elapsedTime += deltaTime * 1000;
       if (this.elapsedTime > 5000) {
         this.elapsedTime = 0;
+        const prevSpeed = this.currentSpeed;
         this.currentSpeed = Math.min(
           this.currentSpeed + CONFIG.SPEED_INCREMENT,
           CONFIG.MAX_SPEED
         );
-        this.player.setSpeed(this.currentSpeed);
+        // 速度が上がった場合のみ通知
+        if (this.currentSpeed > prevSpeed) {
+          this.player.setSpeed(this.currentSpeed);
+          this.groundManager.setSpeed(this.currentSpeed);
+          this.showSpeedUp();
+        }
       }
 
       // ジャンプ入力（押しっぱなし防止）
@@ -205,8 +255,8 @@ export class Game {
         this.spaceKeyPressed = false;
       }
 
-      // ゲームオーバー判定
-      if (this.player.isGameOver()) {
+      // ゲームオーバー判定（落下または壁衝突）
+      if (this.player.isGameOver() || this.player.checkWallCollision(this.groundManager.walls)) {
         this.triggerGameOver();
       }
 
@@ -240,23 +290,25 @@ export class Game {
    * リスタート
    */
   restart() {
-    // アニメーション停止
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
-    
     // リソースクリーンアップ
     this.player.dispose();
     this.groundManager.dispose();
-    
+
     // 状態リセット
     this.gameState = STATE.PLAYING;
     this.score = 0;
     this.currentSpeed = CONFIG.GROUND_SPEED;
     this.elapsedTime = 0;
     this.gameOverElement.style.display = 'none';
-    
-    // 再初期化
-    this.init();
+
+    // 地面とプレイヤーだけ再作成（シーン・物理ワールド・UIは再利用）
+    this.groundManager = new GroundManager3D(this.gameScene.scene, this.physicsWorld);
+    this.groundManager.createInitialGrounds();
+
+    this.player = new Player3D(this.gameScene.scene, this.physicsWorld, [0, 2, 0]);
+    this.player.onLand = () => {
+      this.cameraController.shake(0.08, 0.15);
+    };
+    this.cameraController.setTarget(this.player);
   }
 }

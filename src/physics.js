@@ -97,4 +97,33 @@ export class PhysicsWorld {
   removeRigidBody(body) {
     this.world.removeRigidBody(body);
   }
+
+  /**
+   * 下方向へのレイキャストで地面を検出
+   * @param {Object} origin - 開始点 {x, y, z}
+   * @param {number} maxDistance - 最大距離
+   * @returns {Object|null} - ヒット情報 {distance, point} または null
+   */
+  raycastDown(origin, maxDistance) {
+    if (!this.world) return null;
+
+    const ray = new RAPIER.Ray(
+      { x: origin.x, y: origin.y, z: origin.z },
+      { x: 0, y: -1, z: 0 }
+    );
+
+    const hit = this.world.castRay(ray, maxDistance, true);
+
+    if (hit) {
+      return {
+        distance: hit.time_of_impact,
+        point: {
+          x: origin.x,
+          y: origin.y - hit.time_of_impact,
+          z: origin.z
+        }
+      };
+    }
+    return null;
+  }
 }
